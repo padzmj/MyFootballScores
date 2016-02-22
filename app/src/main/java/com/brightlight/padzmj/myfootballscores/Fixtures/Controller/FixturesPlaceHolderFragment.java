@@ -1,101 +1,236 @@
-package com.brightlight.padzmj.myfootballscores.Fixtures.UI;
-
+package com.brightlight.padzmj.myfootballscores.Fixtures.Controller;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import android.support.v4.view.ViewPager;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.brightlight.padzmj.myfootballscores.FetchFootballData;
-import com.brightlight.padzmj.myfootballscores.Fixtures.Controller.FixturesAdapter;
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.Fixture;
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.Fixtures;
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.MatchResults;
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.TeamData;
+import com.brightlight.padzmj.myfootballscores.Fixtures.UI.FixturesFragment;
+import com.brightlight.padzmj.myfootballscores.MainActivity;
 import com.brightlight.padzmj.myfootballscores.R;
+import com.brightlight.padzmj.myfootballscores.RealmDatabase.DBFixtures;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import io.realm.Realm;
+import io.realm.RealmResults;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 /**
- * Created by PadzMJ on 08/02/2016.
+ * Created by PadzMJ on 17/02/2016.
  */
-public class FixturesFragment extends Fragment {
-
-    public static List<Fixtures> fixturesList = Collections.emptyList();
-    private static Context context;
-    public static RecyclerView recyclerView;
+public class FixturesPlaceHolderFragment extends Fragment {
 
 
-    private static FetchFootballData fetchFootballData;
+    private static final int NUMPAGES = 5;
+    private TextView networkStatus;
+    private static List<Fixtures> fixturesList = Collections.emptyList();
+    private static List<Fixtures> datedFixtures = Collections.emptyList();
+
+    private FetchFootballData fetchFootballData;
 
     private static final String seasons= "http://api.football-data.org/v1/soccerseasons/";
     private static final String teams= "http://api.football-data.org/v1/teams/";
 
-    static final String BUNDESLIGA1 = "394";
-    static final String BUNDESLIGA2 = "395";
-    static final String LIGUE1 = "396";
-    static final String LIGUE2 = "397";
-    static final String PREMIER_LEAGUE = "398";
-    static final String PRIMERA_DIVISION = "399";
-    static final String SEGUNDA_DIVISION = "400";
-    static final String SERIE_A = "401";
-    static final String PRIMERA_LIGA = "402";
-    static final String Bundesliga3 = "403";
-    static final String EREDIVISIE = "404";
-    static final String CHAMPIONS_LEAGUE = "405";
+    final String BUNDESLIGA1 = "394";
+    final String BUNDESLIGA2 = "395";
+    final String LIGUE1 = "396";
+    final String LIGUE2 = "397";
+    final String PREMIER_LEAGUE = "398";
+    final String PRIMERA_DIVISION = "399";
+    final String SEGUNDA_DIVISION = "400";
+    final String SERIE_A = "401";
+    final String PRIMERA_LIGA = "402";
+    final String Bundesliga3 = "403";
+    final String EREDIVISIE = "404";
+    final String CHAMPIONS_LEAGUE = "405";
 
-    public static FixturesFragment newInstance(Context context, List<Fixtures> fixturesList){
-        FixturesFragment.fixturesList = fixturesList;
-        //callAllFixtures("n2");
-        FixturesFragment.context = context;
-        return new FixturesFragment();
+    private CoordinatorLayout mainCoordinatorLayout;
+    private Toolbar mainToolBar;
+    private TabLayout mainTabLayout;
+    private ViewPager mainViewPager;
+    private SwipeRefreshLayout swipeRefreshLayout;
+
+    View rootView;
+
+    private static Context context;
+
+    public static FixturesPlaceHolderFragment newInstance(Context context, List<Fixtures> fixturesList){
+        FixturesPlaceHolderFragment.context = context;
+        FixturesPlaceHolderFragment.fixturesList = fixturesList;
+        return new FixturesPlaceHolderFragment();
     }
 
+    @Nullable
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
 
-        View rootView = inflater.inflate(R.layout.fixtures_list_layout, container, false);
+        View rootView = inflater.inflate(R.layout.fixtures_placeholder_fragment, container, false);
 
-        recyclerView = (RecyclerView) rootView.findViewById(R.id.fixtureListRecyclerView);
-        recyclerView.setAdapter(new FixturesAdapter(context, FixturesFragment.fixturesList));
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new LinearLayoutManager(context));
+        mainCoordinatorLayout = (CoordinatorLayout) rootView.findViewById(R.id.mainCoordinatorLayout);
+        mainTabLayout = (TabLayout) rootView.findViewById(R.id.mainTabLayout);
+        mainToolBar = (Toolbar) rootView.findViewById(R.id.mainToolBarLayout);
+        mainViewPager = (ViewPager) rootView.findViewById(R.id.mainContainerViewPager);
+        swipeRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.swiperefresh);
+
+        ((MainActivity)getActivity()).setSupportActionBar(mainToolBar);
+
+        initViewPager(mainViewPager);
+
+        for(int i = 0; i<fixturesList.size(); i++){
+            Log.i("Date", fixturesList.get(i).getDate() + " Time");
+        }
+
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                initViewPager(mainViewPager);
+            }
+        });
 
         return rootView;
     }
 
+    private void initViewPager(ViewPager viewPager){
+        PagerAdapter pagerAdapter = new PagerAdapter((getActivity()).getSupportFragmentManager());
 
-    public static void callAllFixtures(String timeFrame) {
+        //updateRealmDatabase(fixturesList);
+
+        for(int i = 0; i<NUMPAGES; i++){
+
+            Date date = new Date(System.currentTimeMillis()+((i-2)*86400000));
+            SimpleDateFormat mformat = new SimpleDateFormat("EEEE", Locale.getDefault());
+
+            //sortFixturesByDate(fixturesList, date);
+
+            //SimpleDateFormat mformat2 = new SimpleDateFormat("yyyy-MM-dd");
+            //pagerAdapter.addFragment(FixturesPlaceHolderFragment.newInstance(this), mformat.format(date));
+
+            pagerAdapter.addFragment(FixturesFragment.newInstance(FixturesPlaceHolderFragment.context, fixturesList), mformat.format(date));
+
+//            for(Fixtures fixtures1: fixturesList){
+//                String date1 = fixtures1.getDate().substring(0, fixtures1.getDate().lastIndexOf("T"));
+//
+//                Log.i("DateFormat", date1 + " " + mformat2.format(date));
+//
+//                    if(fixtures1.getDate()==mformat2.format(date)){
+//                    }
+//
+//            }
+            //Toast.makeText(this, fixturesList.size() + " Size", Toast.LENGTH_LONG).show();
+        }
+        swipeRefreshLayout.setRefreshing(false);
+        viewPager.setAdapter(pagerAdapter);
+        viewPager.setCurrentItem(2);
+        mainTabLayout.setupWithViewPager(mainViewPager);
+    }
+
+    private List<Fixtures> sortFixturesByDate(List<Fixtures> fList, Date date) {
+
+        SimpleDateFormat mformat = new SimpleDateFormat("yyyy-MM-dd");
+        List<Fixtures> myFix = new ArrayList<>();
+
+        for(int i = 0; i<fList.size(); i++){
+            String fixDate = fList.get(i).getDate().substring(0, fList.get(i).getDate().lastIndexOf("T"));
+            if(fixDate.equals(mformat.format(date))){
+                Log.i("FixtureDate", fList.get(i).getHomeTeamName() + " " + mformat.format(date));
+                myFix.add(fList.get(i));
+            }
+        }
+
+        return myFix;
+
+            //pagerAdapter.addFragment(FixturesPlaceHolderFragment.newInstance(this), mformat.format(date));
+
+//            for(Fixtures fixtures1: fixturesList){
+//                String date1 = fixtures1.getDate().substring(0, fixtures1.getDate().lastIndexOf("T"));
+//
+//                Log.i("DateFormat", date1 + " " + mformat2.format(date));
+//
+//                    if(fixtures1.getDate()==mformat2.format(date)){
+//                    }
+//
+//            }
+            //Toast.makeText(this, fixturesList.size() + " Size", Toast.LENGTH_LONG).show();
+
+
+    }
+
+    private void updateRealmDatabase(final List<Fixtures> fixturesList){
+        Realm realm = Realm.getInstance(context);
+        List<Fixtures> dbFixtureList = new ArrayList<>();
+        realm.executeTransaction(new Realm.Transaction() {
+            @Override
+            public void execute(Realm realm) {
+
+                String fixtureID, date, homeCrestURL, homeTeamName, homeTeamGoals;
+                String awayCrestURL, awayTeamName, awayTeamGoals;
+
+                for(Fixtures fixtures : fixturesList){
+                    RealmResults<DBFixtures> realmResults = realm.where(DBFixtures.class).equalTo("fixtureID", fixtures.getFixtureID()).findAll();
+
+                    if(realmResults.size()==0){
+                        DBFixtures dbFixtures = realm.createObject(DBFixtures.class);
+
+                        fixtureID = fixtures.getFixtureID();
+                        homeTeamName = fixtures.getHomeTeamName();
+                        homeCrestURL = fixtures.getHomeTeamData().getCrestUrl();
+                        homeTeamGoals = fixtures.getResult().getGoalsHomeTeam();
+                        awayTeamName = fixtures.getAwayTeamName();
+                        awayCrestURL = fixtures.getAwayTeamData().getCrestUrl();
+                        awayTeamGoals = fixtures.getResult().getGoalsAwayTeam();
+
+                        dbFixtures.setFixtureID(fixtureID.toString());
+                        dbFixtures.setHomeTeamName(homeTeamName.toString());
+                        dbFixtures.setHomeTeamCrest(homeCrestURL.toString());
+                        dbFixtures.setGoalsHomeTeam(homeTeamGoals.toString());
+                        dbFixtures.setAwayTeamName(awayTeamName.toString());
+                        dbFixtures.setAwayTeamCrest(awayCrestURL.toString());
+                        dbFixtures.setGoalsAwayTeam(awayTeamGoals.toString());
+                    }
+                }
+            }
+        });
+    }
+
+
+    public void callAllFixtures() {
         final List<Fixtures> fixturesList1 = new ArrayList<>();
         fetchFootballData = new FetchFootballData();
-        fetchFootballData.getAllFixturesCall(timeFrame)
+        fetchFootballData.getAllFixturesCall("p7")
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Fixture>() {
                     @Override
                     public void onCompleted() {
-                        FixturesFragment.fixturesList = fixturesList1;
-                        //getSupportFragmentManager().beginTransaction().replace(R.id.mainFrameLayoutContainer, FixturesFragment.newInstance(getApplicationContext(), fixturesList1)).commit();
+                        //((MainActivity)getActivity()).getSupportFragmentManager().beginTransaction().replace(R.id.mainFrameLayoutContainer, FixturesFragment.newInstance(context, fixturesList1)).commit();
                         Log.i("Fetch", "Completed Main " + fixturesList1.size());
+                        fixturesList = fixturesList1;
                     }
 
                     @Override
@@ -229,8 +364,6 @@ public class FixturesFragment extends Fragment {
                                 results.setGoalsHomeTeam(homeGoals);
                                 results.setGoalsAwayTeam(awayGoals);
 
-                                gameFixture.setDate(matchDate);
-                                gameFixture.setStatus(matchStatus);
                                 gameFixture.setHomeTeamName(homeTeam);
                                 gameFixture.setAwayTeamName(awayTeam);
                                 gameFixture.setResult(results);
@@ -253,7 +386,7 @@ public class FixturesFragment extends Fragment {
         //Log.i("FixtureList1B", fixturesList.size() + " SIZE");
     }
 
-    public static String updateCrestURL(String url){
+    public String updateCrestURL(String url){
 
         //I noticed on google there is the PNG file and SVG file
         //Only difference is the URL which I'm attempting to extract here
@@ -300,5 +433,4 @@ public class FixturesFragment extends Fragment {
 
         return urlReturn;
     }
-
 }

@@ -32,35 +32,6 @@ public class FixturesAdapter extends RecyclerView.Adapter<FixturesViewHolder> {
         this.fixturesList = fixturesList;
         Log.i("CHECK", "Fixtures Adapter");
 
-
-        //Toast.makeText(context, "ADAPTER", Toast.LENGTH_LONG).show();
-
-//        String n = ((fixturesList.get(0).getResult().getGoalsAwayTeam()==null)? "0" : fixturesList.get(0).getResult().getGoalsHomeTeam());
-
-
-        //Toast.makeText(context, "ADAPTER " + n, Toast.LENGTH_LONG).show();
-
-//        for(int i = 0; i<100; i++){
-//            Fixtures fixtures = new Fixtures();
-//            MatchResults matchResults = new MatchResults();
-//            String homeTeam = "HomeTeam ";
-//            String awayTeam = "AwayTeam ";
-//
-//            fixtures.setHomeTeamName(homeTeam + i);
-//            fixtures.setAwayTeamName(awayTeam + i);
-//
-//            Random randomScore1 = new Random();
-//
-//            int score = randomScore1.nextInt(10 - 5) + 5;
-//            int score2 = randomScore1.nextInt(10 - 5) + 5;
-//
-//            matchResults.setGoalsHomeTeam(score + "");
-//            matchResults.setGoalsAwayTeam(score2 + "");
-//
-//            fixtures.setResult(matchResults);
-//
-//            //this.fixturesList.add(fixtures);
-//        }
     }
 
 
@@ -78,10 +49,13 @@ public class FixturesAdapter extends RecyclerView.Adapter<FixturesViewHolder> {
 
     @Override
     public void onBindViewHolder(final FixturesViewHolder holder, int position) {
-        final String homeTeamName =  fixturesList.get(position).getHomeTeamName();
-        final String awayTeamName = fixturesList.get(position).getAwayTeamName();
+        final String homeTeamName =  fixturesList.get(position).getHomeTeamData().getShortName();
+        final String awayTeamName = fixturesList.get(position).getAwayTeamData().getShortName();
         final String homeTeamGoals = fixturesList.get(position).getResult().getGoalsHomeTeam();
         final String awayTeamGoals = ((fixturesList.get(position).getResult()==null)? "0" : fixturesList.get(position).getResult().getGoalsAwayTeam());
+        final String matchDate = fixturesList.get(position).getDate();
+        String matchStatus = fixturesList.get(position).getStatus();
+
 
         Log.i("CHECK", "Bind View Holder");
 
@@ -99,18 +73,33 @@ public class FixturesAdapter extends RecyclerView.Adapter<FixturesViewHolder> {
             awayCrestURL = updateCrestURL(awayCrest);
         }
 
-        Log.i("UTILITY", fixturesList.size() + " SIZE");
-
-        Log.i("NULLEDHOME", homeCrestURL + " " + position);
-        Log.i("NULLEDAWAY", awayCrestURL + " " + position);
-
         holder.homeTeamName.setText(homeTeamName);
         holder.awayTeamName.setText(awayTeamName);
         holder.goalsHomeTeam.setText(homeTeamGoals);
         holder.goalsAwayTeam.setText(awayTeamGoals);
+        holder.matchDate.setText(matchDate.substring(matchDate.indexOf("T")+1, matchDate.lastIndexOf(":")));
+        //holder.matchStatus.setVisibility(View.VISIBLE);
 
-        Glide.with(context).load(homeCrestURL).diskCacheStrategy(DiskCacheStrategy.ALL).into(holder.homeTeamLogo);
-        Glide.with(context).load(awayCrestURL).diskCacheStrategy(DiskCacheStrategy.ALL).into(holder.awayTeamLogo);
+        if(matchStatus!=null){
+            switch (matchStatus){
+                case ("TIMED"):
+                    holder.matchStatus.setVisibility(View.GONE);
+                    break;
+                case ("FINISHED"):
+                    matchStatus = "FT";
+                    break;
+                default:
+                    matchStatus = "-";
+
+            }
+        }
+
+
+        holder.matchStatus.setText(matchStatus);
+
+        //Test just crest later!!!!
+        Glide.with(context).load(homeCrestURL).diskCacheStrategy(DiskCacheStrategy.ALL).error(R.drawable.no_crest).crossFade().into(holder.homeTeamLogo);
+        Glide.with(context).load(awayCrestURL).diskCacheStrategy(DiskCacheStrategy.ALL).error(R.drawable.no_crest).crossFade().into(holder.awayTeamLogo);
     }
 
     @Override
@@ -119,6 +108,10 @@ public class FixturesAdapter extends RecyclerView.Adapter<FixturesViewHolder> {
     }
 
     public String updateCrestURL(String url){
+
+        //I noticed on google there is the PNG file and SVG file
+        //Only difference is the URL which I'm attempting to extract here
+
         String _de = "de/";
         String _en = "en/";
         String commons = "commons/";
@@ -138,19 +131,14 @@ public class FixturesAdapter extends RecyclerView.Adapter<FixturesViewHolder> {
         String lastPartURL = newURL.substring(pos+1, newURL.length());
 
 
-        Log.i("URLUPDATE", url + " NEW URL: " + newURL + " " + pos);
-//        Log.i("URLUPDATE", url + " NEW URL: " + newURL + " " + x);
-
         if(newURL.contains(_de)){
             String newURL1 = newURL.replaceFirst(_de, baseURL+_de+thumb);
             urlReturn = newURL1+"/"+imageSize+lastPartURL+".png";
-            Log.i("URLUPDATE", url + " NEW URL1: " + urlReturn);
         }
 
         if(newURL.contains(_en)){
             String newURL1 = newURL.replaceFirst(_en, baseURL+_en+thumb);
             urlReturn = newURL1+"/"+imageSize+lastPartURL+".png";
-            Log.i("URLUPDATE", url + " NEW URL1: " + urlReturn);
         }
 
         //Paderborn contains https
@@ -158,11 +146,9 @@ public class FixturesAdapter extends RecyclerView.Adapter<FixturesViewHolder> {
             if(newURL.contains(baseURL)){
                 String newURL2 = newURL.replace(commons, commons+thumb);
                 urlReturn = newURL2+"/"+imageSize+lastPartURL+".png";
-                Log.i("URLUPDATE", url + " NEW URL2: " + urlReturn);
             }else {
                 String newURL2 = newURL.replace(commons, baseURL+commons+thumb);
                 urlReturn = newURL2+"/"+imageSize+lastPartURL+".png";
-                Log.i("URLUPDATE", url + " NEW URL3: " + urlReturn);
             }
         }
 

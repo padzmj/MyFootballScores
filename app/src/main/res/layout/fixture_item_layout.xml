@@ -11,7 +11,6 @@
 
         <ImageView
             android:id="@+id/homeTeamLogo"
-            android:src="@drawable/arsenal_logo"
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:layout_centerVertical="true"
@@ -31,18 +30,20 @@
             android:layout_toEndOf="@id/homeTeamLogo"
             android:layout_marginLeft="@dimen/textWithIconMargin"
             android:layout_marginStart="@dimen/textWithIconMargin"
-            android:gravity="center"/>
+            android:gravity="center|start" />
 
     </RelativeLayout>
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:layout_gravity="center">
 
         <RelativeLayout
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:layout_weight="1">
 
             <TextView
@@ -59,29 +60,45 @@
         <RelativeLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.5">
+            android:layout_gravity="center"
+            android:layout_weight="2">
+
             <TextView
                 android:id="@+id/matchStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="-"
+                android:text="FT"
+                android:lines="1"
                 android:textSize="@dimen/extraSmallTextSize"
                 android:textStyle="normal"
                 android:textColor="@color/colorPrimary"
                 android:layout_centerInParent="true"/>
 
+            <TextView
+                android:id="@+id/matchDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/minTextSize"
+                android:textStyle="normal"
+                android:text="12/01"
+                android:textColor="@android:color/darker_gray"
+                android:lines="1"
+                android:layout_centerInParent="true"
+                android:layout_above="@id/matchStatus"
+                android:layout_marginBottom="5dp"/>
         </RelativeLayout>
 
         <RelativeLayout
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:layout_weight="1">
 
             <TextView
                 android:id="@+id/awayTeamScore"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="@dimen/mediumTextSize"
+                android:textSize="@dimen/smallTextSize"
                 android:textStyle="normal"
                 android:textColor="@color/colorPrimary"
                 android:layout_centerInParent="true"/>
@@ -118,6 +135,6 @@
             android:layout_toStartOf="@id/awayTeamLogo"
             android:layout_marginRight="@dimen/textWithIconMargin"
             android:layout_marginEnd="@dimen/textWithIconMargin"
-            android:gravity="center"/>
+            android:gravity="center|end"/>
     </RelativeLayout>
 </LinearLayout>

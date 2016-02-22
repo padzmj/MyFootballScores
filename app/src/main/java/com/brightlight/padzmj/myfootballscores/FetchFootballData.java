@@ -1,7 +1,6 @@
 package com.brightlight.padzmj.myfootballscores;
 
 import android.content.Context;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
 
@@ -9,7 +8,12 @@ import com.brightlight.padzmj.myfootballscores.Fixtures.Model.Fixture;
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.Fixtures;
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.MatchResults;
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.TeamData;
+import com.brightlight.padzmj.myfootballscores.Fixtures.UI.FixturesFragment;
 import com.brightlight.padzmj.myfootballscores.RealmDatabase.DBFixtures;
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
@@ -20,6 +24,7 @@ import java.util.List;
 
 import io.realm.Realm;
 import io.realm.RealmList;
+import io.realm.RealmObject;
 import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
@@ -32,7 +37,7 @@ import rx.schedulers.Schedulers;
 /**
  * Created by PadzMJ on 08/02/2016.
  */
-public class FetchFootballData extends FragmentActivity{
+public class FetchFootballData {
 
 
     //Leagues
@@ -54,7 +59,7 @@ public class FetchFootballData extends FragmentActivity{
 
     private static final String seasons= "http://api.football-data.org/v1/soccerseasons/";
     private static final String teams= "http://api.football-data.org/v1/teams/";
-    Context context;
+    //Context context;
     FragmentManager fragmentManager;
 
     public Retrofit retrofit;
@@ -72,6 +77,20 @@ public class FetchFootballData extends FragmentActivity{
     public FootballDataApi fetchFootballData() {
         if (footballDataApi == null) {
 
+            Gson gson = new GsonBuilder()
+                    .setExclusionStrategies(new ExclusionStrategy() {
+                        @Override
+                        public boolean shouldSkipField(FieldAttributes f) {
+                            return f.getDeclaringClass().equals(RealmObject.class);
+                        }
+
+                        @Override
+                        public boolean shouldSkipClass(Class<?> clazz) {
+                            return false;
+                        }
+                    })
+                    .create();
+
             //for headers
             OkHttpClient okClient = new OkHttpClient();
             okClient.interceptors().add(new Interceptor() {
@@ -84,7 +103,7 @@ public class FetchFootballData extends FragmentActivity{
                     .baseUrl(footballBaseURL)
                     .client(okClient)
                     .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                    .addConverterFactory(GsonConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create(gson))
                     .build();
 
             okClient.setConnectionPool(ConnectionPool.getDefault());
@@ -95,19 +114,22 @@ public class FetchFootballData extends FragmentActivity{
         return footballDataApi;
     }
     //
-    public List<Fixtures> callAllFixtures(Context context) {
 
-        Observable<Fixture> callAllFixturesObservable = fetchFootballData().getAllFixtures("p3");
+    public Observable<Fixture> getAllFixturesCall(String timeFrame){
+        return fetchFootballData().getAllFixtures(timeFrame);
+    }
+    public List<Fixtures> callAllFixtures(final Context context) {
+
         final List<Fixtures> fixturesList1 = new ArrayList<>();
-        realm = Realm.getInstance(context);
+        Observable<Fixture> callAllFixturesObservable = fetchFootballData().getAllFixtures("p4");
 
         callAllFixturesObservable.subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
-                .cache()
                 .subscribe(new Subscriber<Fixture>() {
                                @Override
                                public void onCompleted() {
                                    Log.i("Fetch", "Completed");
+                                   FixturesFragment.fixturesList = fixturesList1;
                                }
 
                                @Override
@@ -126,6 +148,7 @@ public class FetchFootballData extends FragmentActivity{
                                    int ti = 0;
 
                                    Log.i("Fetch", "Fixtures Size " + fixture.getFixtures().size());
+
 
                                    for (int i = 0; i < fixture.getFixtures().size(); i++) {
                                        String season = fixture.getFixtures().get(i).getLinks().getSoccerSeason().getHref();
@@ -160,14 +183,15 @@ public class FetchFootballData extends FragmentActivity{
                                            String awayTeamURL = fixture.getFixtures().get(i).getLinks().getAwayTeam().getHref();
 
 
-                                           Log.i("HOMEURL", "Home Team URL " + homeTeamURL);
+                                           Log.i("Fetch", "Fixture " + ti);
+                                           Log.i("Fetch", homeTeam +  " v " + awayTeam);
 
                                            final String homeTeamID = homeTeamURL.replace(teams, "");
                                            String awayTeamID = awayTeamURL.replace(teams, "");
 
                                            Observable<TeamData> homeTeamDataObservable = fetchFootballData().getTeam(homeTeamID);
-                                           homeTeamDataObservable.subscribeOn(Schedulers.io())
-                                                   .cache()
+                                           homeTeamDataObservable
+                                                   .subscribeOn(Schedulers.newThread())
                                                    .observeOn(AndroidSchedulers.mainThread())
                                                    .subscribe(new Subscriber<TeamData>() {
                                                        @Override
@@ -189,7 +213,8 @@ public class FetchFootballData extends FragmentActivity{
                                                    });
 
                                            Observable<TeamData> awayTeamDataObservable = fetchFootballData().getTeam(awayTeamID);
-                                           awayTeamDataObservable.subscribeOn(Schedulers.newThread())
+                                           awayTeamDataObservable
+                                                   .subscribeOn(Schedulers.newThread())
                                                    .observeOn(AndroidSchedulers.mainThread())
                                                    .subscribe(new Subscriber<TeamData>() {
                                                        @Override
@@ -224,19 +249,14 @@ public class FetchFootballData extends FragmentActivity{
 
                                            fixturesList1.add(gameFixture);
                                        }
-
-
                                    }
-                                   Log.i("FixtureList1A", fixturesList.size() + " SIZE");
-                                   //EventBus.getDefault().post(new FixtureListEvent(fixturesList1));
-//                                   getSupportFragmentManager().beginTransaction().replace(R.id.mainFrameLayoutContainer, FixturesFragment.newInstance(fixturesList1)).commit();
+                                   FixturesFragment.fixturesList = fixturesList1;
                                    FetchFootballData.fixturesList = fixturesList1;
+                                   Log.i("FixtureList1A", FetchFootballData.fixturesList.size() + " SIZE Completed");
                                }
                            });
-        return FetchFootballData.fixturesList;
-        //EventBus.getDefault().post(new FixtureListEvent(fixturesList));
         //Log.i("FixtureList1B", fixturesList.size() + " SIZE");
-        //return fixturesList;
+        return FetchFootballData.fixturesList;
     }
 
     /*

@@ -10,7 +10,7 @@ public class Fixtures {
     @SerializedName("_links")
     private Links _links;
 
-    private String  id, date, status, homeTeamName, awayTeamName, homeTeamID, awayTeamID;
+    private String  id, date, status, homeTeamName, awayTeamName, homeTeamID, awayTeamID, fixtureID;
 
     @SerializedName("result")
     private MatchResults result;
@@ -201,5 +201,13 @@ public class Fixtures {
 
     public void setAwayTeamID(String awayTeamID) {
         this.awayTeamID = awayTeamID;
+    }
+
+    public String getFixtureID() {
+        return fixtureID;
+    }
+
+    public void setFixtureID(String fixtureID) {
+        this.fixtureID = fixtureID;
     }
 }

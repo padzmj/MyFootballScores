@@ -9,18 +9,18 @@ import io.realm.annotations.PrimaryKey;
 public class DBFixtures extends RealmObject {
 
     @PrimaryKey
-    private String id;
+    private String fixtureID;
 
     private String  date, status;
     private String  homeTeamCrest, homeTeamCode, homeTeamName, homeShortName, homeSquadMarketValue, goalsHomeTeam;
     private String  awayTeamCrest, awayTeamCode, awayTeamName, awayShortName, awaySquadMarketValue, goalsAwayTeam;
 
-    public String getId() {
-        return id;
+    public String getFixtureID() {
+        return fixtureID;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setFixtureID(String fixtureID) {
+        this.fixtureID = fixtureID;
     }
 
     public String getHomeTeamCrest() {

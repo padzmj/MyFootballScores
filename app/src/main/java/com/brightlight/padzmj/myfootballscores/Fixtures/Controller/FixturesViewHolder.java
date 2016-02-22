@@ -13,7 +13,7 @@ import com.brightlight.padzmj.myfootballscores.R;
 public class FixturesViewHolder extends RecyclerView.ViewHolder {
 
     ImageView homeTeamLogo, awayTeamLogo;
-    TextView homeTeamName, awayTeamName, goalsHomeTeam, goalsAwayTeam;
+    TextView homeTeamName, awayTeamName, goalsHomeTeam, goalsAwayTeam, matchDate, matchStatus;
 
     public FixturesViewHolder(View itemView) {
         super(itemView);
@@ -23,5 +23,7 @@ public class FixturesViewHolder extends RecyclerView.ViewHolder {
         awayTeamName = (TextView) itemView.findViewById(R.id.awayTeamName);
         goalsHomeTeam = (TextView) itemView.findViewById(R.id.homeTeamScore);
         goalsAwayTeam = (TextView) itemView.findViewById(R.id.awayTeamScore);
+        matchDate = (TextView) itemView.findViewById(R.id.matchDate);
+        matchStatus = (TextView) itemView.findViewById(R.id.matchStatus);
     }
 }

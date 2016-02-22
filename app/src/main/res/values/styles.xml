@@ -5,6 +5,22 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorSecondary">#B6B6B6</item>
+    </style>
+
+    <style name="MyCustomTabLayoutStyle" parent="Widget.Design.TabLayout">
+        <item name="tabMaxWidth">200dp</item>
+        <item name="tabIndicatorHeight">4dp</item>
+        <item name="tabPaddingStart">12dp</item>
+        <item name="tabPaddingEnd">12dp</item>
+        <item name="tabSelectedTextColor">?android:textColor</item>
+
+    </style>
+
+    <style name="MyCustomTabText" parent="TextAppearance.Design.Tab">
+        <item name="android:textSize">@dimen/extraSmallTextSize</item>
+        <item name="textAllCaps">true</item>
     </style>
 
 </resources>
