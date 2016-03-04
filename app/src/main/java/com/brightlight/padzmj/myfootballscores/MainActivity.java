@@ -5,7 +5,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -19,13 +18,11 @@ import com.brightlight.padzmj.myfootballscores.Fixtures.Model.Fixture;
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.Fixtures;
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.MatchResults;
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.TeamData;
-import com.brightlight.padzmj.myfootballscores.RealmDatabase.DBFixtures;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.Realm;
-import io.realm.RealmResults;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -34,8 +31,7 @@ import rx.schedulers.Schedulers;
 public class MainActivity extends AppCompatActivity {
 
     private static final int NUMPAGES = 5;
-    private static List<Fixtures> fixturesList = new ArrayList<>();
-    private SwipeRefreshLayout swipeRefreshLayout;
+    public static List<Fixtures> fixturesList = new ArrayList<>();
 
     private FetchFootballData fetchFootballData;
 
@@ -56,10 +52,13 @@ public class MainActivity extends AppCompatActivity {
     final String CHAMPIONS_LEAGUE = "405";
 
     private CoordinatorLayout mainCoordinatorLayout;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private Toolbar mainToolBar;
     private TabLayout mainTabLayout;
     private ViewPager mainViewPager;
     private TextView networkStatus;
+
+    //private Realm realm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,57 +66,36 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         networkStatus = (TextView) findViewById(R.id.networkStatus);
-        //initUserInterface();
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.mainSwipeView);
 
+        loadData();
 
+//        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+//            @Override
+//            public void onRefresh() {
+//                loadData();
+//                swipeRefreshLayout.setRefreshing(false);
+//            }
+//        });
+    }
+
+    public void loadData(){
         if(isConnected()) {
+            callAllFixtures("p2");
+            callAllFixtures("n2");
+            getSupportFragmentManager().beginTransaction().replace(R.id.frameLayoutContainer, FixturesPlaceHolderFragment.newInstance(getApplicationContext())).commit();
+        } else {
+            setContentView(R.layout.no_network);
 
-            //checkDB();
-
-            callAllFixtures();
-
-            //callAllFixtures();
-//            if(savedInstanceState==null) initViewPager(mainViewPager);
-//
 //            swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
 //                @Override
 //                public void onRefresh() {
-//                    initViewPager(mainViewPager);
+//                    loadData();
+//                    swipeRefreshLayout.setRefreshing(false);
 //                }
 //            });
-        } else {
-            String networkError = "Please check your network";
-            networkStatus.setText(networkError);
-            Snackbar.make(mainCoordinatorLayout, networkError, Snackbar.LENGTH_LONG).show();
+            //getSupportFragmentManager().beginTransaction().replace(R.id.frameLayoutContainer, FixturesPlaceHolderFragment.newInstance(getApplicationContext())).commit();
         }
-    }
-
-    private void checkDB() {
-        Realm realm = Realm.getInstance(this);
-        realm.executeTransaction(new Realm.Transaction() {
-            @Override
-            public void execute(Realm realm) {
-
-                for(Fixtures fixtures : fixturesList){
-                    RealmResults<DBFixtures> realmResults = realm.where(DBFixtures.class).equalTo("fixtureID", fixtures.getFixtureID()).findAll();
-
-                    if(realmResults.size()==0){
-                        DBFixtures dbFixtures = realm.createObject(DBFixtures.class);
-
-                        dbFixtures.setFixtureID(fixtures.getFixtureID());
-                        dbFixtures.setHomeTeamName(fixtures.getHomeTeamName());
-                        dbFixtures.setHomeTeamCrest(fixtures.getHomeTeamData().getCrestUrl());
-                        dbFixtures.setGoalsHomeTeam(fixtures.getResult().getGoalsHomeTeam());
-                        dbFixtures.setAwayTeamName(fixtures.getAwayTeamName());
-                        dbFixtures.setAwayTeamCrest(fixtures.getAwayTeamData().getCrestUrl());
-                        dbFixtures.setGoalsAwayTeam(fixtures.getResult().getGoalsAwayTeam());
-                    }else{
-
-                    }
-
-                }
-            }
-        });
     }
 
     private boolean isConnected(){
@@ -126,19 +104,18 @@ public class MainActivity extends AppCompatActivity {
         return ((networkInfo != null) && networkInfo.isConnected());
     }
 
-    public void callAllFixtures() {
+    public void callAllFixtures(String timeFrame) {
         final List<Fixtures> fixturesList1 = new ArrayList<>();
         fetchFootballData = new FetchFootballData();
-        fetchFootballData.getAllFixturesCall("n3")
+        fetchFootballData.getAllFixturesCall(timeFrame)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Fixture>() {
 
                     @Override
                     public void onCompleted() {
-                        Log.i("Fetch", "Completed Main " + fixturesList1.size());
-                        fixturesList = fixturesList1;
-                        getSupportFragmentManager().beginTransaction().replace(R.id.frameLayoutContainer, FixturesPlaceHolderFragment.newInstance(getApplicationContext(), fixturesList)).commit();
+                        //fixturesList.addAll(fixturesList1);
+                        fixturesList.addAll(fixturesList1);
                     }
 
                     @Override
@@ -148,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onNext(Fixture fixture) {
-                        String fixtureID, homeTeam, awayTeam, homeGoals, awayGoals, matchDate, matchStatus;
+                        String fixtureIDURL, homeTeam, awayTeam, homeGoals, awayGoals, matchDate, matchStatus;
 
                         int ti = 0;
 
@@ -169,10 +146,12 @@ public class MainActivity extends AppCompatActivity {
 
                                 final Fixtures gameFixture = new Fixtures();
                                 MatchResults results = new MatchResults();
+                                final TeamData homeTeamData = new TeamData();
+                                final TeamData awayTeamData = new TeamData();
 
                                 ti++;
 
-                                fixtureID = fixture.getFixtures().get(i).getLinks().getSelf().getHref();
+                                fixtureIDURL = fixture.getFixtures().get(i).getLinks().getSelf().getHref();
                                 homeTeam = fixture.getFixtures().get(i).getHomeTeamName();
                                 awayTeam = fixture.getFixtures().get(i).getAwayTeamName();
                                 homeGoals = fixture.getFixtures().get(i).getResult().getGoalsHomeTeam();
@@ -181,12 +160,17 @@ public class MainActivity extends AppCompatActivity {
                                 matchStatus = fixture.getFixtures().get(i).getStatus();
 
                                 //Get Just Fixture ID
-                                int pos1 = fixtureID.lastIndexOf("/");
-                                String fixtureID1 = fixtureID.substring(pos1 + 1, fixtureID.length());
-                                Log.i("FixtureID", "FixtureID " + fixtureID1);
+                                int pos1 = fixtureIDURL.lastIndexOf("/");
+                                String fixtureID = fixtureIDURL.substring(pos1 + 1, fixtureIDURL.length());
+                                Log.i("FixtureID", "FixtureID " + fixtureID);
+
+                                gameFixture.setFixtureID(fixtureID);
 
                                 String homeTeamURL = fixture.getFixtures().get(i).getLinks().getHomeTeam().getHref();
                                 String awayTeamURL = fixture.getFixtures().get(i).getLinks().getAwayTeam().getHref();
+
+                                String date = matchDate.substring(0, matchDate.indexOf("T"));
+                                String time = matchDate.substring(matchDate.indexOf("T")+1, matchDate.lastIndexOf(":"));
 
 
                                 Log.i("Fetch", "Fixture " + ti);
@@ -194,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
                                 Log.i("Fetch", homeTeam +  " v " + awayTeam);
 
                                 final String homeTeamID = homeTeamURL.replace(teams, "");
-                                String awayTeamID = awayTeamURL.replace(teams, "");
+                                final String awayTeamID = awayTeamURL.replace(teams, "");
 
                                 Observable<TeamData> homeTeamDataObservable = fetchFootballData.fetchFootballData().getTeam(homeTeamID);
                                 homeTeamDataObservable
@@ -203,10 +187,9 @@ public class MainActivity extends AppCompatActivity {
                                         .subscribe(new Subscriber<TeamData>() {
 
                                             TeamData homeTeamDataOB = new TeamData();
+
                                             @Override
                                             public void onCompleted() {
-                                                gameFixture.setHomeTeamData(homeTeamDataOB);
-                                                Log.i("NEXT TEAM DATA", "Complete " + homeTeamDataOB);
                                             }
 
                                             @Override
@@ -215,13 +198,28 @@ public class MainActivity extends AppCompatActivity {
                                             }
 
                                             @Override
-                                            public void onNext(TeamData teamData) {
+                                            public void onNext(final TeamData teamData) {
 
+                                                String teamDataIDLink = teamData.getLinks().getSelf().getHref();
+
+                                                int pos1 = teamDataIDLink.lastIndexOf("/");
+                                                final String teamDataID = teamDataIDLink.substring(pos1 + 1, teamDataIDLink.length());
+                                                Log.i("TeamID", "TeamID " + teamDataID);
+
+                                                teamData.setTeamDataID(homeTeamID);
                                                 if(!teamData.getCrestUrl().contains(".png")){
                                                     teamData.setCrestUrl(updateCrestURL(teamData.getCrestUrl()));
                                                 }
 
                                                 homeTeamDataOB = teamData;
+
+                                                Realm realm1 = Realm.getInstance(getApplicationContext());
+                                                realm1.executeTransaction(new Realm.Transaction() {
+                                                    @Override
+                                                    public void execute(Realm realm) {
+                                                        realm.copyToRealm(teamData);
+                                                    }
+                                                });
                                             }
                                         });
 
@@ -234,8 +232,8 @@ public class MainActivity extends AppCompatActivity {
                                             TeamData awayTeamDataOB = new TeamData();
                                             @Override
                                             public void onCompleted() {
-                                                gameFixture.setAwayTeamData(awayTeamDataOB);
-                                                Log.i("NEXT TEAM DATA2", "Completed " + awayTeamDataOB.getCrestUrl());
+//                                                Log.i("NEXT TEAM DATA2", "Completed " + awayTeamDataOB.getCrestUrl());
+//                                                Log.i("TeamID", "TeamID " + awayTeamDataOB.getTeamDataID());
                                             }
 
                                             @Override
@@ -244,33 +242,70 @@ public class MainActivity extends AppCompatActivity {
                                             }
 
                                             @Override
-                                            public void onNext(TeamData teamData) {
+                                            public void onNext(final TeamData teamData) {
+
+                                                String teamDataIDLink = teamData.getLinks().getSelf().getHref();
+
+                                                int pos1 = teamDataIDLink.lastIndexOf("/");
+                                                final String teamDataID = teamDataIDLink.substring(pos1 + 1, teamDataIDLink.length());
+                                                Log.i("TeamID", "TeamID " + teamDataID);
+
+                                                teamData.setTeamDataID(awayTeamID);
+
 
                                                 if(!teamData.getCrestUrl().contains(".png")){
                                                     teamData.setCrestUrl(updateCrestURL(teamData.getCrestUrl()));
                                                 }
-//
+
                                                 awayTeamDataOB = teamData;
+                                                Realm realm1 = Realm.getInstance(getApplicationContext());
+                                                realm1.executeTransaction(new Realm.Transaction() {
+                                                    @Override
+                                                    public void execute(Realm realm) {
+                                                        realm.copyToRealmOrUpdate(teamData);
+                                                    }
+                                                });
                                             }
                                         });
 
+                                results.setResultID(fixtureID);
                                 results.setGoalsHomeTeam(homeGoals);
                                 results.setGoalsAwayTeam(awayGoals);
+
+                                //gameFixture.setHomeTeamData(homeTeamData);
+                                //gameFixture.setAwayTeamData(awayTeamData);
+
+
 
                                 gameFixture.setHomeTeamName(homeTeam);
                                 gameFixture.setAwayTeamName(awayTeam);
                                 gameFixture.setResult(results);
                                 gameFixture.setStatus(matchStatus);
-                                gameFixture.setDate(matchDate);
+                                gameFixture.setDate(date);
+                                gameFixture.setTime(time);
                                 gameFixture.setHomeTeamID(homeTeamID);
                                 gameFixture.setAwayTeamID(awayTeamID);
-                                gameFixture.setFixtureID(fixtureID);
-                                fixturesList1.add(gameFixture);
+
+                                if(!fixtureID.isEmpty()) fixturesList1.add(gameFixture);
+                                else Log.i("NoID", fixture.getFixtures().get(i).getFixtureID() + " No ID");
+
+                                Realm realm = Realm.getInstance(getApplicationContext());
+                                realm.executeTransaction(new Realm.Transaction() {
+                                    @Override
+                                    public void execute(Realm realm) {
+                                        realm.copyToRealmOrUpdate(fixturesList1);
+                                    }
+                                });
+
+
                             }
                         }
+                        //updateRealmDatabase(fixturesList1);
                         Log.i("FixtureList1", fixturesList1.size() + " SIZE of FIXTURES!!!!!!!!");
                     }
                 });
+
+
     }
 
     public String updateCrestURL(String url){

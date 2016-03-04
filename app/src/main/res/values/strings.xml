@@ -2,4 +2,5 @@
     <string name="app_name">MyFootballScores</string>
 
     <string name="api_key">00cc1325f6f745079e175af58629cafc</string>
+    <string name="no_fixtures">Sorry no fixtures today!</string>
 </resources>

@@ -1,15 +1,10 @@
 package com.brightlight.padzmj.myfootballscores;
 
-import android.content.Context;
 import android.support.v4.app.FragmentManager;
-import android.util.Log;
 
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.Fixture;
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.Fixtures;
-import com.brightlight.padzmj.myfootballscores.Fixtures.Model.MatchResults;
 import com.brightlight.padzmj.myfootballscores.Fixtures.Model.TeamData;
-import com.brightlight.padzmj.myfootballscores.Fixtures.UI.FixturesFragment;
-import com.brightlight.padzmj.myfootballscores.RealmDatabase.DBFixtures;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -23,16 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.Realm;
-import io.realm.RealmList;
 import io.realm.RealmObject;
 import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
 import retrofit.RxJavaCallAdapterFactory;
 import rx.Observable;
-import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by PadzMJ on 08/02/2016.
@@ -65,8 +56,6 @@ public class FetchFootballData {
     public Retrofit retrofit;
 
     private Realm realm;
-
-    private RealmList<DBFixtures> fixturesRealmList = new RealmList<>();
 
     public static List<Fixtures> fixturesList = new ArrayList<>();
     protected static TeamData teamData;
@@ -118,6 +107,8 @@ public class FetchFootballData {
     public Observable<Fixture> getAllFixturesCall(String timeFrame){
         return fetchFootballData().getAllFixtures(timeFrame);
     }
+
+    /*
     public List<Fixtures> callAllFixtures(final Context context) {
 
         final List<Fixtures> fixturesList1 = new ArrayList<>();
