@@ -35,10 +35,15 @@ public class FixturesAdapter extends RecyclerView.Adapter<FixturesViewHolder> {
     public FixturesAdapter(Context context, List<Fixtures> fixturesList){
         layoutInflater = LayoutInflater.from(context);
         this.context = context;
-        this.fixturesList = fixturesList;
         mainRealm = Realm.getInstance(context);
-        Log.i("CHECK", "Fixtures Adapter");
 
+        updateFixturesList(fixturesList);
+        Log.i("CHECK", "Fixtures Adapter");
+    }
+
+    public void updateFixturesList(List<Fixtures> fixturesList){
+        this.fixturesList = fixturesList;
+        notifyDataSetChanged();
     }
 
 

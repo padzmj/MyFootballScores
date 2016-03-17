@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.Realm;
+import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 
 /**
@@ -33,6 +34,7 @@ public class FixturesFragment extends Fragment {
     private RealmResults<Fixtures> realmResults;
     private static String matchDate;
     private String[] fragmentdate = new String[1];
+    private FixturesAdapter fixturesAdapter;
 
 
     public FixturesFragment(){
@@ -45,6 +47,27 @@ public class FixturesFragment extends Fragment {
         return new FixturesFragment();
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        realmResults.addChangeListener(changeListener);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        realmResults.removeChangeListener(changeListener);
+    }
+
+    private RealmChangeListener changeListener = new RealmChangeListener() {
+        @Override
+        public void onChange() {
+            if(!realmResults.isEmpty()) {
+                fixturesAdapter.updateFixturesList(realmResults);
+            }
+        }
+    };
+
     public void setFragmentDate(String date)
     {
         fragmentdate[0] = date;
@@ -53,8 +76,10 @@ public class FixturesFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mainRealm = Realm.getInstance(FixturesFragment.context);
+        mainRealm = Realm.getDefaultInstance();
         getFromDatabaseByDate();
+        fixturesAdapter = new FixturesAdapter(context, realmResults);
+        Log.i("RealmResults", realmResults.size() + " Realm Size");
     }
 
     @Override
@@ -66,7 +91,8 @@ public class FixturesFragment extends Fragment {
         if(!realmResults.isEmpty()) {
             rootView = inflater.inflate(R.layout.fixtures_list_layout, container, false);
             recyclerView = (RecyclerView) rootView.findViewById(R.id.fixtureListRecyclerView);
-            recyclerView.setAdapter(new FixturesAdapter(context, realmResults));
+            //fixturesAdapter = new FixturesAdapter(context, realmResults);
+            recyclerView.setAdapter(fixturesAdapter);
             recyclerView.setHasFixedSize(true);
             recyclerView.setLayoutManager(new LinearLayoutManager(context));
         }

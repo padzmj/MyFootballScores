@@ -2,29 +2,39 @@ package com.brightlight.padzmj.myfootballscores.Fixtures.Model;
 
 import com.google.gson.annotations.SerializedName;
 
+import io.realm.RealmObject;
+import io.realm.annotations.Ignore;
+import io.realm.annotations.PrimaryKey;
+import io.realm.annotations.Required;
+
 /**
  * Created by PadzMJ on 08/02/2016.
  */
-public class Fixtures {
+public class Fixtures extends RealmObject{
 
+    @PrimaryKey
+    @Required
+    private String fixtureID;
+
+    private String date, status, homeTeamName, awayTeamName, homeTeamID, awayTeamID, time;
+
+    @Ignore
     @SerializedName("_links")
-    private Links _links;
-
-    private String  id, date, status, homeTeamName, awayTeamName, homeTeamID, awayTeamID, fixtureID;
+    private Links links;
 
     @SerializedName("result")
     private MatchResults result;
 
-    private TeamData homeTeamData = new TeamData();
+    private TeamData homeTeamData;
 
-    private TeamData awayTeamData = new TeamData();
+    private TeamData awayTeamData;
 
-    public String getId() {
-        return id;
+    public String getFixtureID() {
+        return fixtureID;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setFixtureID(String fixtureID) {
+        this.fixtureID = fixtureID;
     }
 
     public MatchResults getResult() {
@@ -36,11 +46,11 @@ public class Fixtures {
     }
 
     public Links getLinks() {
-        return _links;
+        return links;
     }
 
     public void setLinks(Links links) {
-        this._links = links;
+        this.links = links;
     }
 
     public String getDate() {
@@ -89,6 +99,14 @@ public class Fixtures {
 
     public void setAwayTeamData(TeamData awayTeamData) {
         this.awayTeamData = awayTeamData;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
     }
 
     public class Links{
@@ -203,11 +221,4 @@ public class Fixtures {
         this.awayTeamID = awayTeamID;
     }
 
-    public String getFixtureID() {
-        return fixtureID;
-    }
-
-    public void setFixtureID(String fixtureID) {
-        this.fixtureID = fixtureID;
-    }
 }

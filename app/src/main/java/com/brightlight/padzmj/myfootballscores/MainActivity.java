@@ -69,14 +69,6 @@ public class MainActivity extends AppCompatActivity {
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.mainSwipeView);
 
         loadData();
-
-//        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-//            @Override
-//            public void onRefresh() {
-//                loadData();
-//                swipeRefreshLayout.setRefreshing(false);
-//            }
-//        });
     }
 
     public void loadData(){
@@ -86,15 +78,6 @@ public class MainActivity extends AppCompatActivity {
             getSupportFragmentManager().beginTransaction().replace(R.id.frameLayoutContainer, FixturesPlaceHolderFragment.newInstance(getApplicationContext())).commit();
         } else {
             setContentView(R.layout.no_network);
-
-//            swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-//                @Override
-//                public void onRefresh() {
-//                    loadData();
-//                    swipeRefreshLayout.setRefreshing(false);
-//                }
-//            });
-            //getSupportFragmentManager().beginTransaction().replace(R.id.frameLayoutContainer, FixturesPlaceHolderFragment.newInstance(getApplicationContext())).commit();
         }
     }
 
