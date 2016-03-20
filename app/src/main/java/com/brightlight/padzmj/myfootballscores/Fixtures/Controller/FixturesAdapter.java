@@ -76,6 +76,8 @@ public class FixturesAdapter extends RecyclerView.Adapter<FixturesViewHolder> {
         final String matchTime = fixturesList.get(position).getTime();
         String matchStatus = fixturesList.get(position).getStatus();
         String homeCrest = null, awayCrest = null;
+        final String homeShortName;
+        final String awayShortName;
 
         Log.i("CHECK", "Bind View Holder");
 
@@ -159,7 +161,7 @@ public class FixturesAdapter extends RecyclerView.Adapter<FixturesViewHolder> {
             @Override
             public void onClicked(View v, int position) {
                 Log.i("ClickLog", homeTeamName + " " + homeTeamGoals);
-                ShareFixtureDialog shareFixtureDialog = new ShareFixtureDialog();
+                ShareFixtureDialog shareFixtureDialog = ShareFixtureDialog.newInstance(context, homeTeamName, homeTeamGoals, awayTeamName, awayTeamGoals);
                 shareFixtureDialog.show(((MainActivity)context).getFragmentManager(), "Share");
             }
         });
