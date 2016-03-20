@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
         if(isConnected()) {
             callAllFixtures("p2");
             callAllFixtures("n2");
-            getSupportFragmentManager().beginTransaction().replace(R.id.frameLayoutContainer, FixturesPlaceHolderFragment.newInstance(getApplicationContext())).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.frameLayoutContainer, FixturesPlaceHolderFragment.newInstance(this)).commit();
         } else {
             setContentView(R.layout.no_network);
         }
